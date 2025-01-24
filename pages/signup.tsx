@@ -1,14 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { register } from '../app/services/api'; // Import the API function for login
 
-// Function to handle registration (API call)
-const register = async (username: string, password: string): Promise<void> => {
-  const response = await axios.post("http://localhost:8080/api/v1/auth/signup", {
-    username,
-    password,
-  });
-  return response.data; // Return backend response (can be a message or token)
-};
 
 const SignupForm: React.FC = () => {
   const [username, setUsername] = useState<string>(""); // Manage username
@@ -20,7 +13,7 @@ const SignupForm: React.FC = () => {
     e.preventDefault(); // Prevent page reload
 
     try {
-      await register(username, password); // Call the backend API for registration
+      register(username, password); // Call the backend API for registration
       setSuccess("Account successfully created! You can now log in.");
       setError("");
     } catch (err: unknown) {

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
-import { login } from '../services/api'; // Import the API function for login
-import { authService } from '../services/auth'; // Import authService to manage sessions
+import { login } from '../app/services/api'; // Import the API function for login
+import { authService } from '../app/services/auth'; // Import authService to manage sessions
 import axios from 'axios';
 
 interface LoginResponse {
-  userId: number;
+  id: number;
 }
 
 const Login: React.FC = () => {
@@ -20,11 +20,12 @@ const Login: React.FC = () => {
     try {
       const response: LoginResponse = await login(username, password);
 
+      console.log(response)
       // Save userId (or token) in LocalStorage
-      authService.login(response.userId);
+      authService.login(response.id);
 
       // Redirect to the To-Do List
-      router.push('/todos');
+      router.push('/todolist');
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         // Check if the backend sent a specific error message
@@ -35,6 +36,7 @@ const Login: React.FC = () => {
         }
       } else {
         // Handle other types of errors
+        console.log(err)
         setError('An unknown error occurred.');
       }
     }

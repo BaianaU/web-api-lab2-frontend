@@ -2,19 +2,20 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { api } from '../services/api';
+import { api } from '../app/services/api';
 
 type ToDoItem = {
   id: number;
-  taskName: string;
-  completed: boolean;
+  subject: string;
+  description: string;
 };
 
 export default function ToDoList() {
   const router = useRouter();
   const [tasks, setTasks] = useState<ToDoItem[]>([]);
-  const [taskName, setTaskName] = useState('');
-  const [editingTask, setEditingTask] = useState<ToDoItem | null>(null);
+  const [subject, setsubject] = useState('');
+  const [description, setdescription] = useState('');
+  // const [editingTask, setEditingTask] = useState<ToDoItem | null>(null);
 
   // Redirect if user is not logged in
   useEffect(() => {
@@ -29,24 +30,24 @@ export default function ToDoList() {
   // Fetch to-do list
   const fetchToDoList = async () => {
     try {
-      const response = await api.get('/todos');
+      const userId = localStorage.getItem('userId');
+      const response = await api.get('/task/userid', {
+        params: {
+          userId
+        }});
+        console.log(response)
       setTasks(response.data);
     } catch (error) {
       console.error('Failed to load to-do list:', error);
     }
   };
 
-  // Add or update task
+  // Add task
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (editingTask) {
-        await api.put(`/todos/${editingTask.id}`, { taskName, completed: editingTask.completed });
-        setEditingTask(null);
-      } else {
-        await api.post('/todos', { taskName, completed: false, userId: localStorage.getItem('userId') });
-      }
-      setTaskName('');
+      await api.post('/task', { subject, description, userId: localStorage.getItem('userId') });
+      setsubject('');
       fetchToDoList();
     } catch (error) {
       console.error('Error adding/updating task:', error);
@@ -54,29 +55,16 @@ export default function ToDoList() {
   };
 
   // Delete task
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (taskId: number) => {
     try {
-      await api.delete(`/todos/${id}`);
+      await api.delete(`/task`, {
+        params: {
+          taskId
+        }});
       fetchToDoList();
     } catch (error) {
       console.error('Error deleting task:', error);
     }
-  };
-
-  // Mark task as completed
-  const toggleCompleted = async (task: ToDoItem) => {
-    try {
-      await api.put(`/todos/${task.id}`, { taskName: task.taskName, completed: !task.completed });
-      fetchToDoList();
-    } catch (error) {
-      console.error('Error toggling task completion:', error);
-    }
-  };
-
-  // Handle edit action
-  const handleEdit = (task: ToDoItem) => {
-    setTaskName(task.taskName);
-    setEditingTask(task);
   };
 
   // Logout function
@@ -93,22 +81,28 @@ export default function ToDoList() {
         <form onSubmit={handleSubmit} className="form">
           <input
             type="text"
-            placeholder="Enter task"
-            value={taskName}
-            onChange={(e) => setTaskName(e.target.value)}
+            placeholder="Enter task subject"
+            value={subject}
+            onChange={(e) => setsubject(e.target.value)}
             required
           />
-          <button type="submit">{editingTask ? 'Update Task' : 'Add Task'}</button>
+          <input
+            type="text"
+            placeholder="Enter task description"
+            value={description}
+            onChange={(e) => setdescription(e.target.value)}
+            required
+          />
+          <button type="submit">Add Task</button>
         </form>
 
         <ul className="todo-list">
           {tasks.length > 0 ? (
             tasks.map((task) => (
-              <li key={task.id} className={`list-item ${task.completed ? 'completed' : ''}`}>
-                <span onClick={() => toggleCompleted(task)} className="task-name">
-                  {task.taskName} {task.completed ? '(Completed)' : ''}
+              <li key={task.id}>
+                <span className="task-name">
+                  {task.subject} - {task.description}
                 </span>
-                <button onClick={() => handleEdit(task)} className="btn-edit">Edit</button>
                 <button onClick={() => handleDelete(task.id)} className="btn-delete">Delete</button>
               </li>
             ))
